@@ -14,7 +14,11 @@ output "ssh_key_name" {
   value       = var.key_name
   description = "SSH key name"
 }
-output "aws_lb_active_target_group_hosts" {
+output "aws_lb_active_target_group_ips" {
   value       = join(", ", data.aws_instances.tfe.private_ips)
   description = "EC2 hosts in the AWS LB target group"
+}
+output "aws_active_agents_ips" {
+  value       = join(", ", data.aws_instances.tfc_agent.private_ips)
+  description = "Agent hosts in the autoscaling group"
 }

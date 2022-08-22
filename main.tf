@@ -131,6 +131,15 @@ locals {
       docker_config       = filebase64("files/daemon.json")
     }
   )
+  tfc_agent_user_data = templatefile(
+    "templates/installagent.sh.tpl",
+    {
+      region           = var.region
+      tfcagent_service = filebase64("files/tfc-agent.service")
+      agent_token_id   = aws_secretsmanager_secret.agent_token.id
+      tfe_hostname     = local.tfe_hostname
+    }
+  )
 }
 
 data "local_sensitive_file" "sslcert" {
@@ -146,6 +155,20 @@ data "local_sensitive_file" "sslchain" {
 }
 
 data "aws_instances" "tfe" {
+  instance_tags = {
+    Name = "${local.friendly_name_prefix}-asg-tfe"
+  }
+  filter {
+    name   = "instance.group-id"
+    values = [aws_security_group.internal_sg.id]
+  }
+  instance_state_names = ["running"]
+}
+
+data "aws_instances" "tfc_agent" {
+  instance_tags = {
+    Name = "${local.friendly_name_prefix}-asg-tfc_agent"
+  }
   filter {
     name   = "instance.group-id"
     values = [aws_security_group.internal_sg.id]
@@ -206,7 +229,7 @@ data "aws_iam_policy_document" "secretsmanager" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     effect    = "Allow"
-    resources = [aws_secretsmanager_secret_version.tfe_license.secret_id, aws_secretsmanager_secret_version.tls_certificate.secret_id, aws_secretsmanager_secret_version.tls_key.secret_id]
+    resources = [aws_secretsmanager_secret_version.tfe_license.secret_id, aws_secretsmanager_secret_version.tls_certificate.secret_id, aws_secretsmanager_secret_version.tls_key.secret_id, aws_secretsmanager_secret_version.agent_token.secret_id]
     sid       = "AllowSecretsManagerSecretAccess"
   }
 }
@@ -288,6 +311,16 @@ resource "aws_secretsmanager_secret" "tls_key" {
 resource "aws_secretsmanager_secret_version" "tls_key" {
   secret_binary = filebase64(var.ssl_key_path)
   secret_id     = aws_secretsmanager_secret.tls_key.id
+}
+
+resource "aws_secretsmanager_secret" "agent_token" {
+  description = "TFC agent token"
+  name        = "${local.friendly_name_prefix}-agent_token"
+}
+
+resource "aws_secretsmanager_secret_version" "agent_token" {
+  secret_string = var.agent_token
+  secret_id     = aws_secretsmanager_secret.agent_token.id
 }
 
 resource "aws_iam_role_policy" "tfe_asg_discovery" {
@@ -476,18 +509,18 @@ resource "aws_security_group" "internal_sg" {
     to_port         = 443
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
-    description = "allow https port incoming connection from Load balancer"
+    description     = "allow https port incoming connection from Load balancer"
   }
 
   ingress {
-    from_port = 5432
-    to_port   = 5432
-    protocol  = "tcp"
-    self      = true
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    self        = true
     description = "allow postgres port incoming connections"
   }
 
-/*   ingress {
+  /*   ingress {
     from_port = 9000
     to_port   = 9000
     protocol  = "tcp"
@@ -495,10 +528,10 @@ resource "aws_security_group" "internal_sg" {
   } */
 
   ingress {
-    from_port = 443
-    to_port   = 443
-    protocol  = "tcp"
-    self      = true
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    self        = true
     description = "allow https port incoming connection"
   }
 
@@ -507,14 +540,14 @@ resource "aws_security_group" "internal_sg" {
     to_port         = 22
     protocol        = "tcp"
     security_groups = [aws_security_group.public_sg.id]
-    description = "Allow ssh port 22 from public security group"
+    description     = "Allow ssh port 22 from public security group"
   }
 
   ingress {
-    from_port = 8201
-    to_port   = 8201
-    protocol  = "tcp"
-    self      = true
+    from_port   = 8201
+    to_port     = 8201
+    protocol    = "tcp"
+    self        = true
     description = "allow Vault HA request forwarding"
   }
 
@@ -796,6 +829,53 @@ resource "aws_autoscaling_group" "tfe" {
   tag {
     key                 = "Name"
     value               = "${local.friendly_name_prefix}-asg-tfe"
+    propagate_at_launch = true
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_launch_configuration" "tfc_agent" {
+  name_prefix   = "${local.friendly_name_prefix}-tfc_agent-launch-configuration"
+  image_id      = var.agent_ami
+  instance_type = var.instance_type_agent
+
+  user_data_base64 = base64encode(local.tfc_agent_user_data)
+
+  iam_instance_profile = aws_iam_instance_profile.tfe.name
+  key_name             = var.key_name
+  security_groups      = [aws_security_group.internal_sg.id]
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_put_response_hop_limit = 2
+    http_tokens                 = "optional"
+  }
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 60
+    delete_on_termination = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_autoscaling_group" "tfc_agent" {
+  name                      = "${local.friendly_name_prefix}-asg-tfc_agent"
+  min_size                  = var.asg_min_agents
+  max_size                  = var.asg_max_agents
+  desired_capacity          = var.asg_desired_agents
+  vpc_zone_identifier       = [aws_subnet.subnet_private1.id, aws_subnet.subnet_private2.id]
+  health_check_grace_period = 900
+  health_check_type         = "EC2"
+  launch_configuration      = aws_launch_configuration.tfc_agent.name
+  tag {
+    key                 = "Name"
+    value               = "${local.friendly_name_prefix}-asg-tfc_agent"
     propagate_at_launch = true
   }
   lifecycle {
