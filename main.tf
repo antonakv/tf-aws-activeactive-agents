@@ -176,6 +176,16 @@ data "aws_instances" "tfc_agent" {
   instance_state_names = ["running"]
 }
 
+data "aws_instance" "tfe" {
+  for_each    = toset(data.aws_instances.tfe.ids)
+  instance_id = each.value
+}
+
+data "aws_instance" "tfc_agent" {
+  for_each    = toset(data.aws_instances.tfc_agent.ids)
+  instance_id = each.value
+}
+
 provider "aws" {
   region = var.region
 }
@@ -464,6 +474,22 @@ resource "aws_security_group" "lb_sg" {
     description = "allow https port incoming connection"
   }
 
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow ssh port incoming connection"
+  }
+
+  ingress {
+    from_port   = 19999
+    to_port     = 19999
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "allow netdata port incoming connection"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -494,6 +520,14 @@ resource "aws_security_group" "internal_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow ssh port 22"
+  }
+
+  ingress {
+    from_port   = 19999
+    to_port     = 19999
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow netdata port"
   }
 
   ingress {
@@ -541,6 +575,14 @@ resource "aws_security_group" "internal_sg" {
     protocol        = "tcp"
     security_groups = [aws_security_group.public_sg.id]
     description     = "Allow ssh port 22 from public security group"
+  }
+
+  ingress {
+    from_port       = 19999
+    to_port         = 19999
+    protocol        = "tcp"
+    security_groups = [aws_security_group.public_sg.id]
+    description     = "Allow netdata port from public security group"
   }
 
   ingress {
@@ -597,6 +639,14 @@ resource "aws_security_group" "public_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow ssh port 22"
+  }
+
+  ingress {
+    from_port   = 19999
+    to_port     = 19999
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow netdata port 19999"
   }
 
   egress {
@@ -947,4 +997,94 @@ resource "cloudflare_record" "tfe_jump" {
   type    = "A"
   ttl     = 1
   value   = aws_eip.ssh_jump.public_ip
+}
+
+resource "aws_lb" "tfe_ssh_lb" {
+  for_each           = toset(data.aws_instances.tfe.ids)
+  name               = "${local.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")}"
+  load_balancer_type = "network"
+  subnets            = [aws_subnet.subnet_public1.id, aws_subnet.subnet_public2.id]
+}
+
+resource "aws_lb_target_group" "tfe_ssh" {
+  for_each = toset(data.aws_instances.tfe.ids)
+  name     = "${local.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")}"
+  port     = 22
+  protocol = "TCP"
+  vpc_id   = aws_vpc.vpc.id
+  health_check {
+    protocol = "TCP"
+  }
+}
+
+resource "aws_lb_listener" "tfe_ssh" {
+  for_each          = toset(data.aws_instances.tfe.ids)
+  load_balancer_arn = aws_lb.tfe_ssh_lb[each.key].arn
+  port              = 22
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "tfe_ssh" {
+  for_each         = toset(data.aws_instances.tfe.ids)
+  target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+  target_id        = each.key
+  port             = 22
+}
+
+resource "cloudflare_record" "tfe_ssh" {
+  for_each = toset(data.aws_instances.tfe.ids)
+  zone_id  = var.cloudflare_zone_id
+  name     = "${replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")}"
+  type     = "CNAME"
+  ttl      = 1
+  value    = aws_lb.tfe_ssh_lb[each.key].dns_name
+}
+
+resource "aws_lb" "tfc_agent_ssh_lb" {
+  for_each           = toset(data.aws_instances.tfc_agent.ids)
+  name               = "${local.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  load_balancer_type = "network"
+  subnets            = [aws_subnet.subnet_public1.id, aws_subnet.subnet_public2.id]
+}
+
+resource "aws_lb_target_group" "tfc_agent_ssh" {
+  for_each = toset(data.aws_instances.tfc_agent.ids)
+  name     = "${local.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  port     = 22
+  protocol = "TCP"
+  vpc_id   = aws_vpc.vpc.id
+  health_check {
+    protocol = "TCP"
+  }
+}
+
+resource "aws_lb_listener" "tfc_agent_ssh" {
+  for_each          = toset(data.aws_instances.tfc_agent.ids)
+  load_balancer_arn = aws_lb.tfc_agent_ssh_lb[each.key].arn
+  port              = 22
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "tfc_agent_ssh" {
+  for_each         = toset(data.aws_instances.tfc_agent.ids)
+  target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+  target_id        = each.key
+  port             = 22
+}
+
+resource "cloudflare_record" "tfc_agent_ssh" {
+  for_each = toset(data.aws_instances.tfc_agent.ids)
+  zone_id  = var.cloudflare_zone_id
+  name     = "${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  type     = "CNAME"
+  ttl      = 1
+  value    = aws_lb.tfc_agent_ssh_lb[each.key].dns_name
 }
