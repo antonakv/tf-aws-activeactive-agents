@@ -19,6 +19,8 @@ echo ${tfcagent_service} | base64 --decode > /home/ubuntu/install/tfc-agent.serv
 
 sudo cp /home/ubuntu/install/tfc-agent.service /etc/systemd/system/tfc-agent.service
 
+sudo sysctl -w vm.swappiness=1
+
 sudo systemctl daemon-reload
 
 sudo systemctl enable tfc-agent.service
