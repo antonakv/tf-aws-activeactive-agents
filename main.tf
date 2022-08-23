@@ -806,7 +806,8 @@ resource "aws_launch_configuration" "tfe" {
   }
 
   root_block_device {
-    volume_type           = "gp2"
+    volume_type           = "io1"
+    iops                  = 1000
     volume_size           = 60
     delete_on_termination = true
   }
@@ -854,8 +855,9 @@ resource "aws_launch_configuration" "tfc_agent" {
   }
 
   root_block_device {
-    volume_type           = "gp2"
-    volume_size           = 60
+    volume_type           = "io1"
+    iops                  = 1000
+    volume_size           = 40
     delete_on_termination = true
   }
 
