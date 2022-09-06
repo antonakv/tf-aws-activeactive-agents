@@ -16,9 +16,37 @@ output "ssh_key_name" {
 }
 output "aws_lb_active_target_group_ips" {
   value       = join(", ", data.aws_instances.tfe.private_ips)
-  description = "EC2 hosts in the AWS LB target group"
+  description = "TFE EC2 hosts in the AWS LB target group"
 }
 output "aws_active_agents_ips" {
   value       = join(", ", data.aws_instances.tfc_agent.private_ips)
   description = "Agent hosts in the autoscaling group"
+}
+output "aws_tfe_ec2_ids" {
+  value       = toset(data.aws_instances.tfe.ids)
+  description = "TFE EC2 host ids"
+}
+output "aws_agent_ec2_ids" {
+  value       = toset(data.aws_instances.tfc_agent.ids)
+  description = "Agent EC2 host ids"
+}
+output "vpc_id" {
+  value       = aws_vpc.vpc.id
+  description = "ID of aws vpc"
+}
+output "internal_sg_id" {
+  value       = aws_security_group.internal_sg.id
+  description = "ID of internal security group"
+}
+output "friendly_name_prefix" {
+  value       = local.friendly_name_prefix
+  description = "Friendly name prefix"
+}
+output "subnet_public1_id" {
+  value = aws_subnet.subnet_public1.id
+  description = "ID of aws public subnet 1"
+}
+output "subnet_public2_id" {
+  value = aws_subnet.subnet_public2.id
+  description = "ID of aws public subnet 2"
 }
