@@ -160,7 +160,7 @@ resource "aws_lb_target_group_attachment" "tfc_agent_ssh" {
 
 resource "aws_lb_target_group" "tfc_agent_netdata" {
   for_each = toset(data.aws_instances.tfc_agent.ids)
-  name     = "${data.terraform_remote_state.activeactive-agents.outputs.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  name     = "${data.terraform_remote_state.activeactive-agents.outputs.friendly_name_prefix}-netdata-${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
   port     = 19999
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
