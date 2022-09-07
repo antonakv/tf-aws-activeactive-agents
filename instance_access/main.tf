@@ -101,13 +101,13 @@ resource "aws_lb_listener" "tfe_netdata" {
   protocol          = "TCP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+    target_group_arn = aws_lb_target_group.tfe_netdata[each.key].arn
   }
 }
 
 resource "aws_lb_target_group_attachment" "tfe_netdata" {
   for_each         = toset(data.aws_instances.tfe.ids)
-  target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+  target_group_arn = aws_lb_target_group.tfe_netdata[each.key].arn
   target_id        = each.key
   port             = 19999
 }
@@ -176,13 +176,13 @@ resource "aws_lb_listener" "tfc_agent_netdata" {
   protocol          = "TCP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+    target_group_arn = aws_lb_target_group.tfc_agent_netdata[each.key].arn
   }
 }
 
 resource "aws_lb_target_group_attachment" "tfc_agent_netdata" {
   for_each         = toset(data.aws_instances.tfc_agent.ids)
-  target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+  target_group_arn = aws_lb_target_group.tfc_agent_netdata[each.key].arn
   target_id        = each.key
   port             = 19999
 }
