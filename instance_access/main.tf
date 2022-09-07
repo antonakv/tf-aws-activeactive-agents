@@ -60,7 +60,10 @@ resource "aws_lb_target_group" "tfe_ssh" {
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
-    protocol = "TCP"
+    protocol            = "TCP"
+    interval            = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
 }
 
@@ -90,7 +93,10 @@ resource "aws_lb_target_group" "tfe_netdata" {
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
-    protocol = "TCP"
+    protocol            = "TCP"
+    interval            = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
 }
 
@@ -116,7 +122,7 @@ resource "aws_lb_target_group_attachment" "tfe_netdata" {
 resource "cloudflare_record" "tfe_ssh" {
   for_each = toset(data.aws_instances.tfe.ids)
   zone_id  = var.cloudflare_zone_id
-  name     = "${replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")}"
+  name     = replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")
   type     = "CNAME"
   ttl      = 1
   value    = aws_lb.tfe_ssh_lb[each.key].dns_name
@@ -136,7 +142,10 @@ resource "aws_lb_target_group" "tfc_agent_ssh" {
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
-    protocol = "TCP"
+    protocol            = "TCP"
+    interval            = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
 }
 
@@ -165,7 +174,10 @@ resource "aws_lb_target_group" "tfc_agent_netdata" {
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
-    protocol = "TCP"
+    protocol            = "TCP"
+    interval            = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
 }
 
@@ -190,7 +202,7 @@ resource "aws_lb_target_group_attachment" "tfc_agent_netdata" {
 resource "cloudflare_record" "tfc_agent_ssh" {
   for_each = toset(data.aws_instances.tfc_agent.ids)
   zone_id  = var.cloudflare_zone_id
-  name     = "${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  name     = replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")
   type     = "CNAME"
   ttl      = 1
   value    = aws_lb.tfc_agent_ssh_lb[each.key].dns_name
