@@ -82,6 +82,37 @@ resource "aws_lb_target_group_attachment" "tfe_ssh" {
   port             = 22
 }
 
+
+resource "aws_lb_target_group" "tfe_netdata" {
+  for_each = toset(data.aws_instances.tfe.ids)
+  name     = "${data.terraform_remote_state.activeactive-agents.outputs.friendly_name_prefix}-netdata-${replace(data.aws_instance.tfe[each.value].private_ip, ".", "-")}"
+  port     = 19999
+  protocol = "TCP"
+  vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
+  health_check {
+    protocol = "TCP"
+  }
+}
+
+resource "aws_lb_listener" "tfe_netdata" {
+  for_each          = toset(data.aws_instances.tfe.ids)
+  load_balancer_arn = aws_lb.tfe_ssh_lb[each.key].arn
+  port              = 19999
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "tfe_netdata" {
+  for_each         = toset(data.aws_instances.tfe.ids)
+  target_group_arn = aws_lb_target_group.tfe_ssh[each.key].arn
+  target_id        = each.key
+  port             = 19999
+}
+
+
 resource "cloudflare_record" "tfe_ssh" {
   for_each = toset(data.aws_instances.tfe.ids)
   zone_id  = var.cloudflare_zone_id
@@ -125,6 +156,35 @@ resource "aws_lb_target_group_attachment" "tfc_agent_ssh" {
   target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
   target_id        = each.key
   port             = 22
+}
+
+resource "aws_lb_target_group" "tfc_agent_netdata" {
+  for_each = toset(data.aws_instances.tfc_agent.ids)
+  name     = "${data.terraform_remote_state.activeactive-agents.outputs.friendly_name_prefix}-ssh-${replace(data.aws_instance.tfc_agent[each.value].private_ip, ".", "-")}"
+  port     = 19999
+  protocol = "TCP"
+  vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
+  health_check {
+    protocol = "TCP"
+  }
+}
+
+resource "aws_lb_listener" "tfc_agent_netdata" {
+  for_each          = toset(data.aws_instances.tfc_agent.ids)
+  load_balancer_arn = aws_lb.tfc_agent_ssh_lb[each.key].arn
+  port              = 19999
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "tfc_agent_netdata" {
+  for_each         = toset(data.aws_instances.tfc_agent.ids)
+  target_group_arn = aws_lb_target_group.tfc_agent_ssh[each.key].arn
+  target_id        = each.key
+  port             = 19999
 }
 
 resource "cloudflare_record" "tfc_agent_ssh" {
