@@ -61,7 +61,7 @@ resource "aws_lb_target_group" "tfe_ssh" {
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
     protocol            = "TCP"
-    interval            = 5
+    interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
@@ -94,7 +94,7 @@ resource "aws_lb_target_group" "tfe_netdata" {
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
     protocol            = "TCP"
-    interval            = 5
+    interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
@@ -143,7 +143,7 @@ resource "aws_lb_target_group" "tfc_agent_ssh" {
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
     protocol            = "TCP"
-    interval            = 5
+    interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
@@ -175,7 +175,7 @@ resource "aws_lb_target_group" "tfc_agent_netdata" {
   vpc_id   = data.terraform_remote_state.activeactive-agents.outputs.vpc_id
   health_check {
     protocol            = "TCP"
-    interval            = 5
+    interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
