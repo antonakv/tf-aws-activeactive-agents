@@ -29,12 +29,12 @@ data "aws_instances" "tfc_agent" {
 }
 
 data "aws_instance" "tfe" {
-  for_each    = data.terraform_remote_state.activeactive-agents.outputs.aws_tfe_ec2_ids
+  for_each    = toset(data.aws_instances.tfe.ids)
   instance_id = each.value
 }
 
 data "aws_instance" "tfc_agent" {
-  for_each    = data.terraform_remote_state.activeactive-agents.outputs.aws_agent_ec2_ids
+  for_each    = toset(data.aws_instances.tfc_agent.ids)
   instance_id = each.value
 }
 
