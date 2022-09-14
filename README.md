@@ -60,17 +60,17 @@ cidr_subnet_public_2    = "10.5.4.0/24"
 instance_type_jump      = "t3.medium"
 instance_type_redis     = "cache.t3.medium"
 key_name                = "aakulov"
-jump_ami                = "ami-057b567814acd0cda-your-ami"
-aws_ami                 = "ami-057b567814acd0cda-your-ami"
-agent_ami               = "ami-0f0bd2f63fe01d0bb-your-ami"
+jump_ami                = "ami-09c30cef71e11c0b6-your-ami"
+aws_ami                 = "ami-09c30cef71e11c0b6-your-ami"
+agent_ami               = "ami-0fb41c1d2901bb55c-your-ami"
 db_instance_type        = "db.t3.medium"
 instance_type           = "t3.2xlarge"
 instance_type_agent     = "t3.medium"
-release_sequence        = 652
+release_sequence        = 654
 tfe_hostname            = "tfeaa.domain.cc"
 tfe_hostname_jump       = "tfeaajump.domain.cc"
 postgres_db_name        = "mydbtfe"
-postgres_engine_version = "12.7"
+postgres_engine_version = "14.4"
 postgres_username       = "postgres"
 ssl_cert_path           = "/letsencrypt-ssl-cert/config/live/domain.cc/cert.pem"
 ssl_key_path            = "/letsencrypt-ssl-cert/config/live/domain.cc/privkey.pem"
@@ -83,11 +83,10 @@ asg_min_nodes           = 2
 asg_max_nodes           = 2
 asg_desired_nodes       = 2
 lb_ssl_policy           = "ELBSecurityPolicy-2016-08"
-agent_token             = "empty"
+agent_token             = "Veiiaf1VYL6Jdg.atlasv1.qAQPJjC9sSkZkdmbmE99SyzoiyzJabC7nY7gWoHNzmnIva0U4jyY7GIz2w8kgBPjxCs"
 asg_min_agents          = 0
 asg_max_agents          = 0
 asg_desired_agents      = 0
-
 ```
 
 ## Run terraform code
