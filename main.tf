@@ -816,7 +816,7 @@ resource "aws_db_instance" "tfe" {
   db_subnet_group_name        = aws_db_subnet_group.tfe.name
   vpc_security_group_ids      = [aws_security_group.internal_sg.id]
   skip_final_snapshot         = true
-  allow_major_version_upgrade = false
+  allow_major_version_upgrade = true
   apply_immediately           = true
   auto_minor_version_upgrade  = true
   deletion_protection         = false
