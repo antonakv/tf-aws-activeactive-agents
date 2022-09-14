@@ -9,7 +9,6 @@ function get_secret {
 }
 
 logpath="/home/ubuntu/install/tfeinstall.log" 
-replicated_url="https://s3.amazonaws.com/replicated-airgap-work/replicated.tar.gz"
 
 mkdir -p /var/lib/tfe
 
@@ -40,16 +39,6 @@ echo $cert_base64 | base64 --decode > /var/lib/tfe/certificate.pem
 echo $key_base64 | base64 --decode > /var/lib/tfe/key.pem
 
 sudo echo $license_base64 | sudo base64 --decode > /etc/tfe-license.rli
-
-sudo mkdir -p /etc/replicated
-
-echo "$(date +"%T_%F") Downloading replicated" | tee -a $logpath
-
-curl --output /etc/replicated/replicated.tar.gz "$replicated_url"
-
-echo "$(date +"%T_%F") Extracting replicated" | tee -a $logpath
-
-tar --directory /etc/replicated --extract --file /etc/replicated/replicated.tar.gz
 
 echo "$(date +"%T_%F") Downloading TFE online" | tee -a $logpath
 
