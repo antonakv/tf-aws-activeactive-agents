@@ -22,6 +22,8 @@ sudo echo "${replicated_settings}" | sudo base64 --decode > /etc/replicated.conf
 
 echo "$(date +"%T_%F") Create docker config" | tee -a $logpath
 
+sudo mkdir -p /etc/docker | tee -a $logpath
+
 sudo echo "${docker_config}" | sudo base64 --decode > /etc/docker/daemon.json
 
 echo "$(date +"%T_%F") Extract certificate, key, license from AWS Secretsmanager" | tee -a $logpath
