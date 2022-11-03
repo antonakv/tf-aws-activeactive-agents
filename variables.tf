@@ -100,12 +100,12 @@ variable "asg_desired_nodes" {
 variable "cloudflare_zone_id" {
   type        = string
   description = "Cloudflare DNS zone id"
-  sensitive = true
+  sensitive   = true
 }
 variable "cloudflare_api_token" {
   type        = string
   description = "Cloudflare DNS API token"
-  sensitive = true
+  sensitive   = true
 }
 variable "ssl_cert_path" {
   type        = string
@@ -136,7 +136,7 @@ variable "agent_ami" {
 variable "agent_token" {
   description = "Terraform agent token"
   default     = "not_set"
-  sensitive = true
+  sensitive   = true
 }
 variable "asg_min_agents" {
   type        = number

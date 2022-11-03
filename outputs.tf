@@ -43,10 +43,22 @@ output "friendly_name_prefix" {
   description = "Friendly name prefix"
 }
 output "subnet_public1_id" {
-  value = aws_subnet.subnet_public1.id
+  value       = aws_subnet.subnet_public1.id
   description = "ID of aws public subnet 1"
 }
 output "subnet_public2_id" {
-  value = aws_subnet.subnet_public2.id
+  value       = aws_subnet.subnet_public2.id
   description = "ID of aws public subnet 2"
+}
+output "subnet_private1_id" {
+  value       = aws_subnet.subnet_private1.id
+  description = "ID of aws private subnet 1"
+}
+output "subnet_private2_id" {
+  value       = aws_subnet.subnet_private2.id
+  description = "ID of aws private subnet 2"
+}
+output "region" {
+  description = "AWS region"
+  value       = var.region
 }
