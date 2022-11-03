@@ -87,6 +87,7 @@ agent_token             = "xxxxxxxxxxxxxxxx"
 asg_min_agents          = 0
 asg_max_agents          = 0
 asg_desired_agents      = 0
+k8s_desired_agents      = 0
 ```
 
 ## Run terraform code
