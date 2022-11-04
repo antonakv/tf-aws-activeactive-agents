@@ -789,11 +789,6 @@ resource "aws_instance" "ssh_jump" {
   tags = {
     Name = "${local.friendly_name_prefix}-ssh-jump"
   }
-  user_data = <<-EOF
-  #!/usr/bin/env bash
-  sudo apt update -y
-  sudo apt install nginx -y
-  EOF
 }
 
 resource "random_string" "pgsql_password" {
