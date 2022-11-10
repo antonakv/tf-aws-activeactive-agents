@@ -794,6 +794,11 @@ resource "aws_instance" "ssh_jump" {
     http_endpoint               = "enabled"
     http_put_response_hop_limit = 2
   }
+  root_block_device {
+    volume_type           = "gp3"
+    volume_size           = 20
+    delete_on_termination = true
+  }
   tags = {
     Name = "${local.friendly_name_prefix}-ssh-jump"
   }
