@@ -1,7 +1,7 @@
 # tf-aws-activeactive-agents
 Install TFE with 2 Agents, test workspace plan/apply
 
-This manual is dedicated to Install Terraform Enterprise with 2 agents.
+This manual is dedicated to Install Terraform Enterprise active-active with 2 agents.
 
 ## Requirements
 
